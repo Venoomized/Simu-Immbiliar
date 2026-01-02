@@ -46,6 +46,7 @@
       background:var(--green); border:3px solid #93b600; cursor:pointer;
     }
     .miniLink{font-size:13px;color:#2563eb;text-decoration:none;}
+    .miniLinkBtn{border:0;background:none;color:#2563eb;padding:0;font-size:13px;cursor:pointer}
 
     .note{
       background:#e9f4ff;border:1px solid #cfe7ff;color:#1f4e79;
@@ -91,6 +92,25 @@
     .seg.loan{background:var(--barLoan);}
     .seg.interest{background:var(--barInterest);}
     .underBar{display:flex;justify-content:space-between;gap:10px;font-size:12px;color:var(--muted);margin-top:6px;}
+
+    .taxDetails{
+      margin:6px 0 6px 0;
+      padding:10px 12px;
+      border:1px solid #d7e9ff;
+      border-radius:10px;
+      background:#ffffffa8;
+      display:none;
+    }
+    .taxDetails .miniRow{
+      display:flex;justify-content:space-between;gap:10px;
+      font-size:13px;color:#374151;padding:4px 0;
+    }
+    .taxDetails .note2{
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.35;
+    }
 
     dialog{border:1px solid var(--border);border-radius:12px;max-width:820px;width:92vw;}
     dialog::backdrop{background:rgba(0,0,0,.35);}
@@ -171,9 +191,9 @@
           </span>
 
           <div class="rateBox">
-            <button id="minus">−</button>
+            <button id="minus" aria-label="minus">−</button>
             <div class="rate" id="rateBox" data-fixed="3.60">3,60 %</div>
-            <button id="plus">+</button>
+            <button id="plus" aria-label="plus">+</button>
           </div>
         </div>
 
@@ -281,26 +301,39 @@
         <div><span class="sq" style="background:var(--barPrice);display:inline-block;vertical-align:middle;margin-right:8px"></span><span id="lblPrice2">Preço do imóvel</span></div>
         <div id="priceOut">—</div>
       </div>
-      <div class="row">
-        <div><span class="sq" style="background:var(--barTaxes);display:inline-block;vertical-align:middle;margin-right:8px"></span><span id="lblTaxes">Impostos e despesas da compra</span> <span class="muted">ⓘ</span></div>
-        <div id="taxesOut">—</div><div id="taxDetails" style="margin:6px 0 6px 0;padding-left:20px;color:#374151;font-size:13px;">
-  <div class="row" style="padding:4px 0;">
-    <div><span id="lblIMTDetail">IMT</span></div>
-    <div id="imtOut">—</div>
-  </div>
-  <div class="row" style="padding:4px 0;">
-    <div><span id="lblStampBuyDetail">Imposto do Selo (0,8%)</span></div>
-    <div id="stampBuyOut">—</div>
-  </div>
-  <div class="row" style="padding:4px 0;">
-    <div><span id="lblOtherDetail">Outras despesas</span></div>
-    <div id="otherOut">—</div>
-  </div>
-  <div class="row" style="padding:4px 0;">
-    <div><span id="lblStampCreditDetail">IS do crédito</span> <span class="muted">ⓘ</span></div>
-    <div id="stampCreditOut">—</div>
-  </div>
-</div>
+
+      <div class="row" style="align-items:flex-start;">
+        <div>
+          <span class="sq" style="background:var(--barTaxes);display:inline-block;vertical-align:middle;margin-right:8px"></span>
+          <span id="lblTaxes">Impostos e despesas da compra</span> <span class="muted">ⓘ</span>
+          <div style="margin-top:4px">
+            <button class="miniLinkBtn" id="toggleTaxes">Ver detalhe</button>
+          </div>
+        </div>
+        <div id="taxesOut">—</div>
+      </div>
+
+      <!-- tax details box -->
+      <div class="taxDetails" id="taxDetails">
+        <div class="miniRow">
+          <div id="lblIMTDetail">IMT</div>
+          <div id="imtOut">—</div>
+        </div>
+        <div class="miniRow">
+          <div id="lblStampBuyDetail">Imposto do Selo (0,8%)</div>
+          <div id="stampBuyOut">—</div>
+        </div>
+        <div class="miniRow">
+          <div id="lblOtherDetail">Outras despesas</div>
+          <div id="otherOut">—</div>
+        </div>
+        <div class="miniRow">
+          <div id="lblStampCreditDetail">IS do crédito</div>
+          <div id="stampCreditOut">—</div>
+        </div>
+        <div class="note2" id="stampCreditNote">
+          Nota: o IS do crédito é normalmente cobrado no momento da utilização do crédito (não é um “custo de compra” do imóvel).
+        </div>
       </div>
 
       <div class="row" style="font-weight:950">
@@ -425,6 +458,14 @@ const I18N = {
     dlgTitle:"Tabela de amortização (estimativa)",
     close:"Fechar",
     thMonth:"Mês", thPayment:"Prestação", thInterest:"Juro", thPrincipal:"Capital", thBalance:"Saldo",
+
+    toggleShow:"Ver detalhe",
+    toggleHide:"Esconder detalhe",
+    lblIMTDetail:"IMT",
+    lblStampBuyDetail:"Imposto do Selo (0,8%)",
+    lblOtherDetail:"Outras despesas",
+    lblStampCreditDetail:"IS do crédito",
+    stampCreditNote:"Nota: o IS do crédito é normalmente cobrado no momento da utilização do crédito (não é um “custo de compra” do imóvel)."
   },
   fr: {
     title:"Simulateur de crédit immobilier",
@@ -452,7 +493,7 @@ const I18N = {
     taxHint:"Modifiable",
     lblVpt:"VPT (optionnel)",
     lblOther:"Autres frais (€)",
-    taxExplain:"IMT + Imposto do Selo (0,8%) + IS du crédit + autres frais.",
+    taxExplain:"IMT + Imposto do Selo (0,8%) + timbre du crédit + autres frais.",
     lblLoan:"Montant du crédit",
     lblLtv:"Pourcentage financé",
     lblPrice2:"Prix du bien",
@@ -470,6 +511,14 @@ const I18N = {
     dlgTitle:"Tableau d’amortissement (estimation)",
     close:"Fermer",
     thMonth:"Mois", thPayment:"Mensualité", thInterest:"Intérêt", thPrincipal:"Capital", thBalance:"Solde",
+
+    toggleShow:"Voir le détail",
+    toggleHide:"Masquer le détail",
+    lblIMTDetail:"IMT",
+    lblStampBuyDetail:"Imposto do Selo (0,8%)",
+    lblOtherDetail:"Autres frais",
+    lblStampCreditDetail:"Timbre du crédit",
+    stampCreditNote:"Note : le timbre du crédit est généralement prélevé au moment de la mise à disposition du crédit (ce n’est pas un “frais d’achat” du bien)."
   }
 };
 
@@ -524,6 +573,15 @@ function applyLang(lang){
   setText("thInterest", d.thInterest);
   setText("thPrincipal", d.thPrincipal);
   setText("thBalance", d.thBalance);
+
+  setText("lblIMTDetail", d.lblIMTDetail);
+  setText("lblStampBuyDetail", d.lblStampBuyDetail);
+  setText("lblOtherDetail", d.lblOtherDetail);
+  setText("lblStampCreditDetail", d.lblStampCreditDetail);
+  setText("stampCreditNote", d.stampCreditNote);
+
+  // update toggle label depending on state
+  updateTaxesToggleLabel();
 }
 
 /* ===============================
@@ -665,12 +723,26 @@ function getRadio(name){
 function setFixedRatePct(v){
   const vv = Math.max(0, Math.round(v*100)/100);
   $("rateBox").dataset.fixed = vv.toFixed(2);
-  const show = vv.toFixed(2).replace('.',',') + " %";
-  $("rateBox").textContent = show;
 }
 function getFixedRatePct(){
   return parseFloat($("rateBox").dataset.fixed || "3.60");
 }
+function setRateBoxDisplay(pct){
+  // show with comma for PT/FR
+  const txt = pct.toFixed(2).replace('.',',') + " %";
+  $("rateBox").textContent = txt;
+}
+
+/* ===============================
+   Taxes toggle
+================================ */
+let taxesDetailsOpen = false;
+function updateTaxesToggleLabel(){
+  const lang = $("lang").value;
+  const d = I18N[lang];
+  $("toggleTaxes").textContent = taxesDetailsOpen ? d.toggleHide : d.toggleShow;
+}
+$("toggleTaxes")?.addEventListener?.("click", ()=>{});
 
 /* ===============================
    Main recompute
@@ -691,14 +763,14 @@ function recompute(){
   const isBuy = stampPurchase(base);
   const other = +$("otherFees").value || 0;
 
-  // Like the screenshot: "Impostos e despesas da compra" = IMT + IS (0,8%) + outras despesas
+  // Like screenshot: "Taxes achat" = IMT + IS(0,8%) + autres frais
   const taxesAndFees = imt + isBuy + other;
 
   const totalCost = price + taxesAndFees;
   const loan = Math.max(0, totalCost - savings);
   const ltv = totalCost > 0 ? (loan / totalCost) : 0;
 
-  // stamp duty on credit (not included in "taxesAndFees" by default, but used in background)
+  // credit stamp duty (shown in detail)
   const isCredit = stampCredit(loan, years);
 
   let monthly = 0;
@@ -706,28 +778,33 @@ function recompute(){
 
   if(rateType==="fixed"){
     $("varBox").style.display = "none";
+
     const rate = getFixedRatePct();
+    setRateBoxDisplay(rate);
+
     monthly = monthlyFixed(loan, rate, years);
     totalInterest = Math.max(0, monthly * Math.round(years*12) - loan);
     window.__amort = amortTableFixed(loan, rate, years, 360);
   }else{
     $("varBox").style.display = "block";
+
     const euribor = +$("euribor").value || 0;
     const spread = +$("spread").value || 0;
     const rev = +$("rev").value || 12;
     const annual = euribor + spread;
 
+    setRateBoxDisplay(annual);
+
     const sim = simulateVariableConstant({principal:loan, years, euribor, spread, revMonths:rev});
     monthly = sim.monthly0;
     totalInterest = sim.totalInterest;
 
-    // amort preview approximated with constant annual (Euribor constant)
     window.__amort = amortTableFixed(loan, annual, years, 360);
   }
 
   const totalWithLoan = savings + (loan + totalInterest);
 
-  // left: savings % of price (like screenshot)
+  // left: savings % of price
   const pct = price>0 ? (savings/price*100) : 0;
   $("savingsPct").textContent = Math.round(pct) + "%";
 
@@ -744,7 +821,13 @@ function recompute(){
   $("legInterestVal").textContent = fmtEUR(totalInterest);
   $("totalWithLoan").textContent = fmtEUR(totalWithLoan);
 
-  // Bar segments: savings / loan / interest relative to (savings+loan+interest)
+  // Tax details
+  $("imtOut").textContent = fmtEUR(imt);
+  $("stampBuyOut").textContent = fmtEUR(isBuy);
+  $("otherOut").textContent = fmtEUR(other);
+  $("stampCreditOut").textContent = fmtEUR(isCredit);
+
+  // Bar segments
   const denom = Math.max(1, savings + loan + totalInterest);
   $("segSavings").style.width = (savings/denom*100) + "%";
   $("segLoan").style.width = (loan/denom*100) + "%";
@@ -753,9 +836,6 @@ function recompute(){
   $("underSavings").textContent = fmtEUR(savings);
   $("underLoan").textContent = fmtEUR(loan);
   $("underInterest").textContent = fmtEUR(totalInterest);
-
-  // (optional) keep credit stamp duty computed for future display if you want:
-  window.__isCredit = isCredit;
 }
 
 /* ===============================
@@ -765,19 +845,41 @@ syncRange($("price"), $("priceR"));
 syncRange($("savings"), $("savingsR"));
 syncRange($("years"), $("yearsR"));
 
-$("minus").addEventListener("click", ()=>{ setFixedRatePct(getFixedRatePct()-0.10); recompute(); });
-$("plus").addEventListener("click", ()=>{ setFixedRatePct(getFixedRatePct()+0.10); recompute(); });
+// plus/minus behavior:
+// - fixed: adjusts fixed rate
+// - variable: adjusts euribor (spread stays)
+$("minus").addEventListener("click", ()=>{
+  const rateType = getRadio("rateType");
+  if(rateType === "fixed"){
+    setFixedRatePct(getFixedRatePct()-0.10);
+  }else{
+    $("euribor").value = (Math.max(0, (+$("euribor").value||0) - 0.10)).toFixed(2);
+  }
+  recompute();
+});
+$("plus").addEventListener("click", ()=>{
+  const rateType = getRadio("rateType");
+  if(rateType === "fixed"){
+    setFixedRatePct(getFixedRatePct()+0.10);
+  }else{
+    $("euribor").value = ((+$("euribor").value||0) + 0.10).toFixed(2);
+  }
+  recompute();
+});
 
 document.querySelectorAll('input,select').forEach(el=>{
   el.addEventListener('input', ()=>recompute());
 });
 
-$("fixed").addEventListener("change", ()=>recompute());
-$("variable").addEventListener("change", ()=>recompute());
-
 $("lang").addEventListener("change", ()=>{
   applyLang($("lang").value);
   recompute();
+});
+
+$("toggleTaxes").addEventListener("click", ()=>{
+  taxesDetailsOpen = !taxesDetailsOpen;
+  $("taxDetails").style.display = taxesDetailsOpen ? "block" : "none";
+  updateTaxesToggleLabel();
 });
 
 $("amortLink").addEventListener("click", ()=>{
