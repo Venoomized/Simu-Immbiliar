@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Simulateur crédit (starter)</title>
+  <style>
+    body{font-family:system-ui;margin:24px;max-width:720px}
+    label{display:block;margin-top:12px}
+    input{width:100%;padding:10px;border:1px solid #ddd;border-radius:10px;font-size:16px}
+    .card{margin-top:18px;padding:14px;border:1px solid #ddd;border-radius:12px;background:#f7fbff}
+    .big{font-size:30px;font-weight:900}
+  </style>
+</head>
+<body>
+  <h1>Simulateur crédit (starter)</h1>
+
+  <label>Prix du bien (€)</label>
+  <input id="price" type="number" value="495000" step="1000">
+
+  <label>Apport (€)</label>
+  <input id="down" type="number" value="148500" step="500">
+
+  <label>Durée (années)</label>
+  <input id="years" type="number" value="13" min="1" max="40">
+
+  <label>Taux annuel fixe (%)</label>
+  <input id="rate" type="number" value="3.60" step="0.01">
+
+  <div class="card">
+    <div>Mensualité estimée</div>
+    <div class="big" id="monthly">—</div>
+    <div id="loan">—</div>
+  </div>
+
+<script>
+  const fmt = (n)=> new Intl.NumberFormat('fr-FR',{style:'currency',currency:'EUR'}).format(n);
+
+  function monthlyPayment(P, annualRate, years){
+    const n = years*12;
+    const r = (annualRate/100)/12;
+    if(P<=0) return 0;
+    if(r===0) return P/n;
+    return P*r/(1-Math.pow(1+r,-n));
+  }
+
+  function recompute(){
+    const price = +document.getElementById('price').value||0;
+    const down  = +document.getElementById('down').value||0;
+    const years = +document.getElementById('years').value||1;
+    const rate  = +document.getElementById('rate').value||0;
+
+    const loan = Math.max(0, price - down);
+    const m = monthlyPayment(loan, rate, years);
+
+    document.getElementById('monthly').textContent = fmt(m);
+    document.getElementById('loan').textContent = "Montant emprunté : " + fmt(loan);
+  }
+
+  document.querySelectorAll('input').forEach(i=>i.addEventListener('input',recompute));
+  recompute();
+</script>
+</body>
+</html>
