@@ -248,6 +248,9 @@
 
       <div class="field">
         <div class="labelrow"><label id="lblAge">Tens 35 anos ou menos?</label></div>
+        <div class="help" id="ageHint" style="margin-top:6px">
+          Aplica-se apenas a primeira HPP (IMT Jovem). Se for “Secundária”, normalmente não altera.
+        </div>
         <div class="radioRow">
           <span class="pill">
             <input type="radio" name="age" id="ageYes" value="yes">
@@ -313,7 +316,6 @@
         <div id="taxesOut">—</div>
       </div>
 
-      <!-- tax details box -->
       <div class="taxDetails" id="taxDetails">
         <div class="miniRow">
           <div id="lblIMTDetail">IMT</div>
@@ -434,6 +436,7 @@ const I18N = {
     lblHpp:"Principal (HPP)",
     lblNonHpp:"Secundária",
     lblAge:"Tens 35 anos ou menos?",
+    ageHint:"Aplica-se apenas a primeira HPP (IMT Jovem). Se for “Secundária”, normalmente não altera.",
     lblYes:"Sim",
     lblNo:"Não",
     lblTaxesBox:"Impostos e despesas (detalhe)",
@@ -487,6 +490,7 @@ const I18N = {
     lblHpp:"Principale (HPP)",
     lblNonHpp:"Secondaire",
     lblAge:"35 ans ou moins ?",
+    ageHint:"S’applique en général uniquement à une première résidence principale (HPP / IMT Jovem). Si c’est “Secondaire”, ça ne change souvent rien.",
     lblYes:"Oui",
     lblNo:"Non",
     lblTaxesBox:"Taxes et frais (détail)",
@@ -545,6 +549,7 @@ function applyLang(lang){
   setText("lblHpp", d.lblHpp);
   setText("lblNonHpp", d.lblNonHpp);
   setText("lblAge", d.lblAge);
+  setText("ageHint", d.ageHint);
   setText("lblYes", d.lblYes);
   setText("lblNo", d.lblNo);
   setText("lblTaxesBox", d.lblTaxesBox);
@@ -580,13 +585,11 @@ function applyLang(lang){
   setText("lblStampCreditDetail", d.lblStampCreditDetail);
   setText("stampCreditNote", d.stampCreditNote);
 
-  // update toggle label depending on state
   updateTaxesToggleLabel();
 }
 
 /* ===============================
    IMT tables 2026 (Continente + Açores)
-   Format: IMT = base*rate - deduction (or base*rate if flat=true)
 ================================ */
 const IMT_TABLES_2026 = {
   continente: {
@@ -631,7 +634,7 @@ const IMT_TABLES_2026 = {
   }
 };
 
-function calcIMT(base, region, regime){
+function calcIMTStandard(base, region, regime){
   const table = IMT_TABLES_2026[region][regime];
   const row = table.find(x => x.upTo === null || base <= x.upTo) || table[table.length-1];
   if(row.flat) return base * row.rate;
@@ -728,7 +731,6 @@ function getFixedRatePct(){
   return parseFloat($("rateBox").dataset.fixed || "3.60");
 }
 function setRateBoxDisplay(pct){
-  // show with comma for PT/FR
   const txt = pct.toFixed(2).replace('.',',') + " %";
   $("rateBox").textContent = txt;
 }
@@ -742,7 +744,34 @@ function updateTaxesToggleLabel(){
   const d = I18N[lang];
   $("toggleTaxes").textContent = taxesDetailsOpen ? d.toggleHide : d.toggleShow;
 }
-$("toggleTaxes")?.addEventListener?.("click", ()=>{});
+
+/* ===============================
+   IMT Jovem (simplified UI model)
+   - Only when: ageYes AND regime === "hpp"
+   - Total exemption <= 330 539
+   - Partial <= 660 982 : tax only the part above 330 539 at 8%
+   - Above: fallback to standard
+================================ */
+const YOUNG_TOTAL = 330539;
+const YOUNG_PARTIAL_MAX = 660982;
+
+function calcIMT(base, region, regime, isYoung){
+  if(isYoung && regime === "hpp"){
+    if(base <= YOUNG_TOTAL) return 0;
+    if(base <= YOUNG_PARTIAL_MAX) return (base - YOUNG_TOTAL) * 0.08;
+    // else: fallback standard
+  }
+  return calcIMTStandard(base, region, regime);
+}
+
+function stampPurchaseWithYoung(base, isYoung, regime){
+  let v = stampPurchase(base);
+  if(isYoung && regime === "hpp"){
+    if(base <= YOUNG_TOTAL) return 0;
+    if(base <= YOUNG_PARTIAL_MAX) return (base - YOUNG_TOTAL) * 0.008;
+  }
+  return v;
+}
 
 /* ===============================
    Main recompute
@@ -756,11 +785,12 @@ function recompute(){
   const region = $("region").value;        // continente | acores
   const regime = getRadio("use");          // hpp | nonhpp
   const rateType = getRadio("rateType");   // fixed | variable
+  const isYoung = (getRadio("age") === "yes");
 
   const base = Math.max(price, vpt);
 
-  const imt = calcIMT(base, region, regime);
-  const isBuy = stampPurchase(base);
+  const imt = calcIMT(base, region, regime, isYoung);
+  const isBuy = stampPurchaseWithYoung(base, isYoung, regime);
   const other = +$("otherFees").value || 0;
 
   // Like screenshot: "Taxes achat" = IMT + IS(0,8%) + autres frais
@@ -770,7 +800,6 @@ function recompute(){
   const loan = Math.max(0, totalCost - savings);
   const ltv = totalCost > 0 ? (loan / totalCost) : 0;
 
-  // credit stamp duty (shown in detail)
   const isCredit = stampCredit(loan, years);
 
   let monthly = 0;
@@ -778,7 +807,6 @@ function recompute(){
 
   if(rateType==="fixed"){
     $("varBox").style.display = "none";
-
     const rate = getFixedRatePct();
     setRateBoxDisplay(rate);
 
@@ -787,7 +815,6 @@ function recompute(){
     window.__amort = amortTableFixed(loan, rate, years, 360);
   }else{
     $("varBox").style.display = "block";
-
     const euribor = +$("euribor").value || 0;
     const spread = +$("spread").value || 0;
     const rev = +$("rev").value || 12;
@@ -847,7 +874,7 @@ syncRange($("years"), $("yearsR"));
 
 // plus/minus behavior:
 // - fixed: adjusts fixed rate
-// - variable: adjusts euribor (spread stays)
+// - variable: adjusts euribor
 $("minus").addEventListener("click", ()=>{
   const rateType = getRadio("rateType");
   if(rateType === "fixed"){
